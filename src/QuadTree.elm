@@ -10,7 +10,7 @@ module QuadTree (
   center,
   intersectBoundingBoxes,
   emptyQuadTree,
-  lengthQuadTree,
+  length,
   insert,
   insertMany,
   remove,
@@ -21,9 +21,9 @@ module QuadTree (
   reset,
   findItems,
   apply,
-  mapQuadTree,
-  mapSafe
-)where
+  applySafe,
+  map,
+  mapSafe)where
 
 {-| QuadTree implementation in Elm.
 
@@ -60,17 +60,17 @@ module QuadTree (
 -}
 
 
-import Array (..)
+import Array
 import Trampoline (..)
 
-dropIf : (a -> Bool) -> Array a -> Array a
-dropIf predicate = filter (not << predicate)
+dropIf : (a -> Bool) -> Array.Array a -> Array.Array a
+dropIf predicate = Array.filter (not << predicate)
 
-flippedMap : (a -> Array a -> a) -> Array a -> Array a
+flippedMap : (a -> Array.Array a -> a) -> Array.Array a -> Array.Array a
 flippedMap f array =
   let g y x = f x y
   in
-    map (g array) array
+    Array.map (g array) array
 
 loop : a -> (a -> Bool) -> (a -> a) -> (a -> b) -> b
 loop start condition update return =
@@ -196,7 +196,7 @@ type alias Bounded a = {
     can be inserted in each leaf.
 -}
 type QuadTree a =
-  Leaf BoundingBox Int (Array a) |
+  Leaf BoundingBox Int (Array.Array a) |
   Node BoundingBox (QuadTree a) (QuadTree a) (QuadTree a) (QuadTree a)
 
 {-| Construct an empty QuadTree given a bounding box and
@@ -205,21 +205,21 @@ type QuadTree a =
 -}
 emptyQuadTree : BoundingBox -> Int -> QuadTree a
 emptyQuadTree boundingBox maxSize =
-  Leaf boundingBox maxSize empty
+  Leaf boundingBox maxSize Array.empty
 
 {-| Find the number of items in a quadTree. If elements are
     duplicated in different leaves, they will be counted
     multiple times.
 -}
-lengthQuadTree : QuadTree a -> Int
-lengthQuadTree quadTree =
+length : QuadTree a -> Int
+length quadTree =
   case quadTree of
-    Leaf box maxSize items -> length items
+    Leaf box maxSize items -> Array.length items
     Node box quadTreeNE quadTreeNW quadTreeSW quadTreeSE ->
-      lengthQuadTree quadTreeNE +
-      lengthQuadTree quadTreeNW +
-      lengthQuadTree quadTreeSW +
-      lengthQuadTree quadTreeSE
+      length quadTreeNE +
+      length quadTreeNW +
+      length quadTreeSW +
+      length quadTreeSE
 
 {-| Insert an item into a quadTree.
 -}
@@ -228,9 +228,9 @@ insert item quadTree =
   case quadTree of
     Leaf box maxSize items ->
       if intersectBoundingBoxes item.boundingBox box then
-        let allItems = push item items
+        let allItems = Array.push item items
             insertNew quadrant =
-              foldr (\item quadTree -> insert item quadTree)
+              Array.foldr (\item quadTree -> insert item quadTree)
                     (emptyQuadTree quadrant maxSize)
                     allItems
             quadTreeNE = subdivideNE box
@@ -238,7 +238,7 @@ insert item quadTree =
             quadTreeSW = subdivideSW box
             quadTreeSE = subdivideSE box
         in
-          if length items < maxSize then Leaf box maxSize (push item items)
+          if Array.length items < maxSize then Leaf box maxSize (Array.push item items)
           else
             Node box (insertNew quadTreeNE)
                      (insertNew quadTreeNW)
@@ -258,14 +258,14 @@ insert item quadTree =
 
 {-| Insert an array of items into a quadTree.
 -}
-insertMany : Array (Bounded a) -> QuadTree (Bounded a) -> QuadTree (Bounded a)
+insertMany : Array.Array (Bounded a) -> QuadTree (Bounded a) -> QuadTree (Bounded a)
 insertMany items quadTree =
-  let stoppingCondition {items} = get 0 items == Nothing
+  let stoppingCondition {items} = Array.get 0 items == Nothing
       loopBody ({items, quadTree} as variables) =
-        case get 0 items of
+        case Array.get 0 items of
           Nothing -> variables
           Just item -> {
-            items = slice 1 (length items) items,
+            items = Array.slice 1 (Array.length items) items,
             quadTree = insert item quadTree
           }
       returnFunction = .quadTree
@@ -316,14 +316,14 @@ getMaxSize quadTree =
 
 {-| Get all items from a quadTree. Conserves duplicates.
 -}
-getAllItems : QuadTree a -> Array a
+getAllItems : QuadTree a -> Array.Array a
 getAllItems quadTree =
   case quadTree of
     Leaf box maxSize items -> items
     Node box quadTreeNE quadTreeNW quadTreeSW quadTreeSE ->
-      getAllItems quadTreeNE `append`
-      getAllItems quadTreeNW `append`
-      getAllItems quadTreeSW `append`
+      getAllItems quadTreeNE `Array.append`
+      getAllItems quadTreeNW `Array.append`
+      getAllItems quadTreeSW `Array.append`
       getAllItems quadTreeSE
 
 {-| Reset a quadTree. This function gets all items
@@ -341,17 +341,17 @@ reset quadTree =
     item or would share a leaf with the given item were the item in
     the quadTree. Useful for finding items close to the given item.
 -}
-findItems : Bounded a -> QuadTree (Bounded a) -> Array (Bounded a)
+findItems : Bounded a -> QuadTree (Bounded a) -> Array.Array (Bounded a)
 findItems item quadTree =
   case quadTree of
     Leaf box maxSize items ->
       if intersectBoundingBoxes item.boundingBox box
       then items
-      else empty
+      else Array.empty
     Node box quadTreeNE quadTreeNW quadTreeSW quadTreeSE ->
-      findItems item quadTreeNE `append`
-      findItems item quadTreeNW `append`
-      findItems item quadTreeSW `append`
+      findItems item quadTreeNE `Array.append`
+      findItems item quadTreeNW `Array.append`
+      findItems item quadTreeSW `Array.append`
       findItems item quadTreeSE
 
 {-| Apply a function, that takes an item and an array of items
@@ -360,7 +360,7 @@ findItems item quadTree =
     where the input function updates an object after colliding
     it with an array of objects.
 -}
-apply : (a -> Array a -> a) -> QuadTree a -> QuadTree a
+apply : (a -> Array.Array a -> a) -> QuadTree a -> QuadTree a
 apply f quadTree =
   case quadTree of
     Leaf box maxSize items -> Leaf box maxSize (flippedMap f items)
@@ -373,12 +373,11 @@ apply f quadTree =
 {-| Safe version of apply. Automatically calls reset after applying
     the function on the quadTree.
 -}
-applySafe : (Bounded a -> Array (Bounded a) -> Bounded a) -> QuadTree (Bounded a) -> QuadTree (Bounded a)
+applySafe : (Bounded a -> Array.Array (Bounded a) -> Bounded a) -> QuadTree (Bounded a) -> QuadTree (Bounded a)
 applySafe f quadTree =
   reset <| apply f quadTree
 
-{-| The good 'ol map function which has a weird name such that
-    it doesn't clash with other functions called map.
+{-| The good 'ol map function.
     Maps a function over a quadTree and returns a new quadTree.
     Note: If your function modifies in any way the items'
     bounding boxes, consider using `mapSafe` or calling reset
@@ -386,20 +385,20 @@ applySafe f quadTree =
     wrong place. This function doesn't do the clean-up
     automatically. If you want such functionality, use `mapSafe`.
 -}
-mapQuadTree : (a -> b) -> QuadTree a -> QuadTree b
-mapQuadTree f quadTree =
+map : (a -> b) -> QuadTree a -> QuadTree b
+map f quadTree =
   case quadTree of
-    Leaf box maxSize items -> Leaf box maxSize (map f items)
+    Leaf box maxSize items -> Leaf box maxSize (Array.map f items)
     Node box quadTreeNE quadTreeNW quadTreeSW quadTreeSE ->
-      Node box (mapQuadTree f quadTreeNE)
-               (mapQuadTree f quadTreeNW)
-               (mapQuadTree f quadTreeSW)
-               (mapQuadTree f quadTreeSE)
+      Node box (map f quadTreeNE)
+               (map f quadTreeNW)
+               (map f quadTreeSW)
+               (map f quadTreeSE)
 
 
-{-| Version of `mapQuadTree` where the quadTree is reset
+{-| Version of `map` where the quadTree is reset
     automatically after applying the function.
 -}
 mapSafe : (Bounded a -> Bounded b) -> QuadTree (Bounded a) -> QuadTree (Bounded b)
 mapSafe f quadTree =
-  reset <| mapQuadTree f quadTree
+  reset <| map f quadTree
