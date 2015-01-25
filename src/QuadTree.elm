@@ -37,7 +37,7 @@ module QuadTree (
 @docs QuadTree, emptyQuadTree
 
 # Properties
-@docs getMaxSize, getBoundingBox, lengthQuadTree
+@docs getMaxSize, getBoundingBox, length
 
 # Inserting items
 @docs insert, insertMany
@@ -52,7 +52,7 @@ module QuadTree (
 @docs findItems, getAllItems
 
 # Applying functions
-@docs apply, mapQuadTree, mapSafe
+@docs apply, map, mapSafe
 
 # Reset a QuadTree
 @docs reset
