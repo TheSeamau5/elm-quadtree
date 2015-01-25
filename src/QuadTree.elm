@@ -294,7 +294,7 @@ remove item quadTree =
     applies the given updateFunction, and then inserts the updated
     item into the quadTree.
 -}
-update : (a -> a) -> Bounded a -> QuadTree (Bounded a) -> QuadTree (Bounded a)
+update : (Bounded a -> Bounded a) -> Bounded a -> QuadTree (Bounded a) -> QuadTree (Bounded a)
 update updateFunction item quadTree =
   insert (updateFunction item) (remove item quadTree)
 
@@ -373,7 +373,7 @@ apply f quadTree =
 {-| Safe version of apply. Automatically calls reset after applying
     the function on the quadTree.
 -}
-applySafe : (a -> Array a -> a) -> QuadTree a -> QuadTree a
+applySafe : (Bounded a -> Array (Bounded a) -> Bounded a) -> QuadTree (Bounded a) -> QuadTree (Bounded a)
 applySafe f quadTree =
   reset <| apply f quadTree
 
