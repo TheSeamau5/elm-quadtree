@@ -370,6 +370,13 @@ apply f quadTree =
                (apply f quadTreeSW)
                (apply f quadTreeSE)
 
+{-| Safe version of apply. Automatically calls reset after applying
+    the function on the quadTree.
+-}
+applySafe : (a -> Array a -> a) -> QuadTree a -> QuadTree a
+applySafe f quadTree =
+  reset <| apply f quadTree
+
 {-| The good 'ol map function which has a weird name such that
     it doesn't clash with other functions called map.
     Maps a function over a quadTree and returns a new quadTree.
