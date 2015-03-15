@@ -186,8 +186,8 @@ subdivideSE box =
 ---------
 {-| Extend this record type in order to use the QuadTree.
 -}
-type alias Bounded a = {
-  boundingBox : BoundingBox
+type alias Bounded a = { 
+  a | boundingBox : BoundingBox
 }
 
 ---------
