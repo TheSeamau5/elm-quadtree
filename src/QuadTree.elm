@@ -61,7 +61,7 @@ module QuadTree (
 
 
 import Array
-import Trampoline (..)
+import Trampoline exposing (..)
 
 dropIf : (a -> Bool) -> Array.Array a -> Array.Array a
 dropIf predicate = Array.filter (not << predicate)
@@ -186,7 +186,7 @@ subdivideSE box =
 ---------
 {-| Extend this record type in order to use the QuadTree.
 -}
-type alias Bounded a = { 
+type alias Bounded a = {
   a | boundingBox : BoundingBox
 }
 
