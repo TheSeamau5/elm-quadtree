@@ -1,5 +1,6 @@
 module BoundingBox (
   BoundingBox,
+  Interval,
   boundingBox,
   width,
   height,
@@ -14,11 +15,22 @@ module BoundingBox (
 
 {-| AABB Bounding box implementation in Elm.
 
-# Bounding Boxes
-@docs boundingBox, intersectBoundingBoxes, width, height, halfWidth, halfHeight, center
+# Types
+@docs BoundingBox, Interval
+
+# Contruction and derived properties
+@docs boundingBox, width, height, halfWidth, halfHeight, center
+
+# Predicates
+@docs intersectBoundingBoxes
+
+# Modification
+@docs subdivideNW, subdivideNE, subdivideSW, subdivideSE
 
 -}
 
+{-| Represents a one dimensional range.
+-}
 type alias Interval = {
   low : Float,
   high : Float
@@ -32,7 +44,8 @@ intersectIntervals : Interval -> Interval -> Bool
 intersectIntervals interval1 interval2 =
   pointInInterval interval1.low interval2
 
---------
+{-| Represents a rectangle.
+-}
 type alias BoundingBox = {
   horizontal : Interval,
   vertical : Interval
@@ -86,6 +99,8 @@ center box = {
   y = box.vertical.low + halfHeight box }
 
 
+{-| Quarters a bounding box in the North-East direction
+-}
 subdivideNE : BoundingBox -> BoundingBox
 subdivideNE box =
   let minX = box.horizontal.low + halfWidth box
@@ -93,6 +108,8 @@ subdivideNE box =
   in
     boundingBox minX box.horizontal.high minY box.vertical.high
 
+{-| Quarters a bounding box in the North-West direction
+-}
 subdivideNW : BoundingBox -> BoundingBox
 subdivideNW box =
   let maxX = box.horizontal.high - halfWidth box
@@ -100,6 +117,8 @@ subdivideNW box =
   in
     boundingBox box.horizontal.low maxX minY box.vertical.high
 
+{-| Quarters a bounding box in the South-West direction
+-}
 subdivideSW : BoundingBox -> BoundingBox
 subdivideSW box =
   let maxX = box.horizontal.high - halfWidth box
@@ -107,6 +126,8 @@ subdivideSW box =
   in
     boundingBox box.horizontal.low maxX box.vertical.low maxY
 
+{-| Quarters a bounding box in the South-East direction
+-}
 subdivideSE : BoundingBox -> BoundingBox
 subdivideSE box =
   let minX = box.horizontal.low + halfWidth box
