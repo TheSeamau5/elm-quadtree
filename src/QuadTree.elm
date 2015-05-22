@@ -11,7 +11,7 @@ module QuadTree (
   getMaxSize,
   getAllItems,
   reset,
-  findInLeaf,
+  findItems,
   apply,
   applySafe,
   map,
@@ -41,7 +41,7 @@ module QuadTree (
 @docs update
 
 # Querying
-@docs findInLeaf, getAllItems
+@docs findItems, getAllItems
 
 # Applying functions
 @docs apply, map, mapSafe
@@ -237,18 +237,18 @@ reset quadTree =
     item or would share a leaf with the given item were the item in
     the quadTree. Useful for finding items close to the given item.
 -}
-findInLeaf : Bounded a -> QuadTree (Bounded a) -> Array.Array (Bounded a)
-findInLeaf item quadTree =
+findItems : Bounded a -> QuadTree (Bounded a) -> Array.Array (Bounded a)
+findItems item quadTree =
   case quadTree of
     Leaf box maxSize items ->
       if intersectBoundingBoxes item.boundingBox box
       then items
       else Array.empty
     Node box quadTreeNE quadTreeNW quadTreeSW quadTreeSE ->
-      findInLeaf item quadTreeNE `Array.append`
-      findInLeaf item quadTreeNW `Array.append`
-      findInLeaf item quadTreeSW `Array.append`
-      findInLeaf item quadTreeSE
+      findItems item quadTreeNE `Array.append`
+      findItems item quadTreeNW `Array.append`
+      findItems item quadTreeSW `Array.append`
+      findItems item quadTreeSE
 
 {-| Apply a function, that takes an item and an array of items
     and returns an item, to a quadTree. This function is
