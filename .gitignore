@@ -1,0 +1,9 @@
+# Elm files
+elm-stuff/
+
+# Build output
+index.html
+
+# Intellij Files
+.idea/
+*.iml

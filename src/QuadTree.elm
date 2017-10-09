@@ -136,6 +136,8 @@ pointInInterval point interval =
 intersectIntervals : Interval -> Interval -> Bool
 intersectIntervals interval1 interval2 =
     pointInInterval interval1.low interval2
+        || pointInInterval interval1.high interval2
+        || (interval1.low <= interval2.low && interval1.high >= interval2.high)
 
 
 
