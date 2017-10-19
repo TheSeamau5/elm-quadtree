@@ -21,6 +21,7 @@ module QuadTree
         , getAllItems
         , reset
         , findItems
+        , findIntersecting
         , apply
         , applySafe
         , map
@@ -67,7 +68,7 @@ module QuadTree
 
 # Querying
 
-@docs findItems, getAllItems
+@docs findItems, findIntersecting, getAllItems
 
 
 # Applying functions
@@ -476,6 +477,16 @@ findItems item quadTree =
                 |> Array.append (findItems item quadTreeNW)
                 |> Array.append (findItems item quadTreeSW)
                 |> Array.append (findItems item quadTreeSE)
+
+
+{-| Find all items that actually intersect with the given item.
+
+Similar to `findItems` but will return only intersection items, without neighboring items.
+
+-}
+findIntersecting : Bounded a -> QuadTree (Bounded a) -> Array.Array (Bounded a)
+findIntersecting ({ boundingBox } as item) quadTree =
+    Array.filter (\listItem -> intersectBoundingBoxes boundingBox listItem.boundingBox) <| findItems item quadTree
 
 
 {-| Apply a function, that takes an item and an array of items

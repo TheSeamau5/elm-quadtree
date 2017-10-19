@@ -1,9 +1,10 @@
 module Tests exposing (..)
 
+import Array
 import Expect exposing (Expectation)
 import Fuzz exposing (Fuzzer, int, list, string)
 import Test exposing (..)
-import QuadTree exposing (boundingBox, intersectBoundingBoxes)
+import QuadTree exposing (boundingBox, emptyQuadTree, findIntersecting, findItems, getAllItems, insert, insertMany, intersectBoundingBoxes, length)
 
 
 toIntervalTest ( ( low1, high1 ), ( low2, high2 ), expected ) =
@@ -73,4 +74,101 @@ intersectBoundingBoxTest =
                 , ( ( 1, 2 ), ( 0, 3 ), True )
                 , ( ( 0, 3 ), ( 1, 2 ), True )
                 ]
+        ]
+
+
+treeLimits =
+    boundingBox -10 10 -10 10
+
+
+quadTreeInsertTest : Test
+quadTreeInsertTest =
+    describe "Insert to Quad Tree"
+        [ test "insert to empty" <|
+            \() ->
+                let
+                    tree =
+                        emptyQuadTree treeLimits 4
+
+                    bounded =
+                        { boundingBox = boundingBox 0 1 0 1 }
+                in
+                    Expect.equal (length (insert bounded tree)) 1
+        , test "find in 1 element quad tree" <|
+            \() ->
+                let
+                    tree =
+                        emptyQuadTree treeLimits 4
+
+                    bounded =
+                        { boundingBox = boundingBox 0 1 0 1 }
+
+                    treeWithElements =
+                        insert bounded tree
+                in
+                    Expect.equalLists (Array.toList <| getAllItems treeWithElements) [ bounded ]
+        , test "Add multiple items" <|
+            \() ->
+                let
+                    tree =
+                        emptyQuadTree treeLimits 4
+
+                    boundeds =
+                        [ { boundingBox = boundingBox 0 1 0 1 }
+                        , { boundingBox = boundingBox -1 0 0 1 }
+                        , { boundingBox = boundingBox 0 1 -1 0 }
+                        , { boundingBox = boundingBox -1 0 -1 0 }
+                        ]
+
+                    testTree =
+                        List.foldl insert tree boundeds
+                in
+                    Expect.equalLists (Array.toList <| getAllItems testTree) boundeds
+        ]
+
+
+boundedItem minX maxX minY maxY =
+    { boundingBox = boundingBox minX maxX minY maxY }
+
+
+treeLookupTest : Test
+treeLookupTest =
+    describe "Find in tree"
+        [ test "Find in 1 sized tree" <|
+            \() ->
+                let
+                    tree =
+                        emptyQuadTree treeLimits 4
+
+                    bounded =
+                        { boundingBox = boundingBox 0 1 0 1 }
+
+                    testTree =
+                        insert bounded tree
+
+                    searchBox =
+                        { boundingBox = boundingBox 0.5 0.5 0.5 0.5 }
+                in
+                    Expect.equalLists [ bounded ] (Array.toList <| findItems searchBox testTree)
+        , test "Find in a massive tree" <|
+            \() ->
+                let
+                    tree =
+                        emptyQuadTree treeLimits 4
+
+                    items =
+                        [ boundedItem 0 1 0 1
+                        , boundedItem -1 0 -2 -1
+                        , boundedItem 1 2 0 1
+                        , boundedItem 2 4 -1 0
+                        , boundedItem -3 -1 -1 0
+                        ]
+
+                    testTree =
+                        insertMany (Array.fromList items) tree
+
+                    searchBox =
+                        boundedItem -2 -2 -0.5 -0.5
+                in
+                    Expect.equalLists (List.take 1 <| List.reverse items) (Array.toList <| findIntersecting searchBox testTree)
         ]
