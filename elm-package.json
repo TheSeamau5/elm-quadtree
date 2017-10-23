@@ -1,7 +1,7 @@
 {
-    "version": "3.0.1",
+    "version": "3.1.0",
     "summary": "QuadTree implementation in Elm",
-    "repository": "https://github.com/TheSeamau5/elm-quadtree.git",
+    "repository": "https://github.com/luftzig/elm-quadtree.git",
     "license": "BSD3",
     "source-directories": [
         "src"
@@ -10,7 +10,6 @@
         "QuadTree"
     ],
     "dependencies": {
-        "elm-community/elm-list-extra": "2.0.0 <= v < 3.0.0",
         "elm-lang/core": "5.0.0 <= v < 6.0.0",
         "elm-lang/trampoline": "1.0.1 <= v < 2.0.0"
     },
